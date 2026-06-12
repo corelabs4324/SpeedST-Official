@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+  <rect width="800" height="1000" fill="#101013"/>
+  <rect x="40" y="40" width="720" height="920" fill="none" stroke="#2e2e36" stroke-width="2" stroke-dasharray="8 8"/>
+  <text x="400" y="480" fill="#9b9ba4" font-family="system-ui,sans-serif" font-size="28" font-weight="700" text-anchor="middle">Rear Lifestyle</text>
+  <text x="400" y="530" fill="#6b6b74" font-family="system-ui,sans-serif" font-size="16" text-anchor="middle">Replace: lifestyle-rear.png</text>
+</svg>
