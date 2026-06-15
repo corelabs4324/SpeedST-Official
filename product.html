@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/popup.css">
 <style>
   .crumb { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--smoke); padding: 28px 0 0; text-transform: uppercase; letter-spacing: .1em; }
   .crumb a { color: var(--smoke); text-decoration: none; }
@@ -24,6 +25,7 @@
   .p-meta a { color: var(--ink); text-decoration: none; }
   h1 { font-family: 'Anton', sans-serif; font-size: clamp(28px, 4vw, 42px); text-transform: uppercase; line-height: .95; margin-bottom: 10px; }
   .p-sub { color: var(--smoke); font-size: 15px; margin-bottom: 20px; }
+  .p-desc { color: var(--smoke); font-size: 14px; line-height: 1.6; margin: -12px 0 20px; max-width: 420px; }
   .stars { letter-spacing: 3px; font-size: 14px; margin-bottom: 20px; }
   .p-price { font-family: 'Anton', sans-serif; font-size: 42px; margin-bottom: 4px; }
   .p-price .was { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--smoke); text-decoration: line-through; margin-left: 10px; font-weight: 400; }
@@ -63,13 +65,14 @@
   <a href="index.html" class="mark sm"><span class="speed">SPEED</span><span class="st">·ST</span></a>
   <div class="nav-links">
     <a href="shop.html">Shop all</a>
+    <a href="bundles.html">Bundles</a>
     <a href="blackout-plates.html">Blackout Plates</a>
     <a href="underglow.html">Underglow</a>
     <a href="interior-glow.html">Interior Glow</a>
     <a href="stickers.html">Stickers</a>
     <a href="meets.html">Meets &amp; Collabs</a>
   </div>
-  <a href="shop.html" class="btn btn-ink" style="padding:10px 18px;font-size:12px">Shop ↗</a>
+  <a href="cart.html" class="cart-pill">Cart · <span class="count" data-cart-count>0</span></a>
 </div></nav>
 
 <main class="wrap" id="main" style="max-width:1100px">
@@ -88,6 +91,7 @@
         <div class="p-meta"><a id="pCategory" href="shop.html"></a></div>
         <h1 id="pTitle"></h1>
         <p class="p-sub" id="pSub"></p>
+        <p class="p-desc" id="pDesc" hidden></p>
         <div class="stars" aria-hidden="true">★★★★★</div>
         <div class="p-price" id="pPrice"></div>
         <p class="p-save" id="pSave" hidden></p>
@@ -106,9 +110,9 @@
         </div>
 
         <div id="buyWrap">
-          <a href="#" class="btn btn-ink buy-btn-full" id="buyBtn" target="_blank" rel="noopener">Buy now ↗</a>
-          <button type="button" class="btn btn-ink buy-btn-full" id="buyBtnDisabled" disabled hidden>Payment link coming soon</button>
-          <p class="stripe-note" id="stripeNote">Checkout via Stripe Payment Link — paste URLs in <code>js/catalog.js</code></p>
+          <button type="button" class="btn btn-ink buy-btn-full" id="addBtn">Add to cart</button>
+          <a href="cart.html" class="btn btn-ghost buy-btn-full" id="addedMsg" hidden style="margin-top:10px">View cart →</a>
+          <p class="stripe-note" id="stripeNote">Add multiple items, then checkout once from your cart. Promo codes accepted at checkout.</p>
         </div>
       </div>
     </div>
@@ -123,6 +127,7 @@
 </footer>
 
 <script src="js/catalog.js"></script>
+<script src="js/cart.js"></script>
 <script>
 const id = new URLSearchParams(location.search).get('id');
 const product = getProduct(id);
@@ -141,10 +146,11 @@ const INCLUDES = {
 };
 
 const GALLERY_EXTRA = {
-  plates: ['assets/mode-comparison.svg', 'assets/lifestyle-rear.svg', 'assets/feature-detail.svg'],
-  underglow: ['assets/underglow-car.svg', 'assets/underglow-kit.svg', 'assets/meets-hero.svg'],
-  interior: ['assets/interior-glow-kit.svg', 'assets/underglow-car.svg', 'assets/meets-hero.svg'],
-  stickers: ['assets/sticker-pack.svg', 'assets/lifestyle-rear.svg', 'assets/meets-hero.svg']
+  plates: ['assets/mode-comparison.png', 'assets/feature-fits-all.png', 'assets/feature-universal-fit.png', 'assets/feature-detail.png'],
+  underglow: ['assets/lifestyle-underglow-m3.png', 'assets/underglow-pro-marketing.png', 'assets/underglow-gtr-banner.png', 'assets/underglow-porsche-banner.png'],
+  interior: ['assets/interior-installed.png', 'assets/interior-glow-full-kit.png', 'assets/interior-glow-marketing.png', 'assets/interior-glow-open-box.png'],
+  stickers: ['assets/sticker-pack.png', 'assets/lifestyle-underglow-m3.png', 'assets/lifestyle-rear.png'],
+  bundles: ['assets/bundle-plates-underglow-interior.png', 'assets/underglow-gtr-banner.png', 'assets/meets-hero.png', 'assets/interior-installed.png']
 };
 
 if (!product) {
@@ -176,6 +182,13 @@ if (!product) {
   catLink.href = product.page || 'shop.html';
   document.getElementById('pTitle').textContent = product.title;
   document.getElementById('pSub').textContent = product.subtitle;
+  const descEl = document.getElementById('pDesc');
+  if (product.description) {
+    descEl.textContent = product.description;
+    descEl.hidden = false;
+  } else {
+    descEl.hidden = true;
+  }
 
   const disc = discountPct(product.price, product.compareAt);
   document.getElementById('pPrice').innerHTML =
@@ -189,7 +202,17 @@ if (!product) {
   }
 
   const sizeOpts = document.getElementById('sizeOpts');
-  sizeOpts.className = 'size-opts' + (product.sizes.length === 2 ? ' multi-2' : product.sizes.length >= 3 ? ' multi-3' : '');
+  const sizeLabel = document.getElementById('sizeLabel');
+  const singleSize = product.sizes.length === 1;
+
+  if (singleSize) {
+    sizeLabel.hidden = true;
+    sizeOpts.hidden = true;
+  } else {
+    sizeLabel.hidden = false;
+    sizeOpts.hidden = false;
+    sizeOpts.className = 'size-opts' + (product.sizes.length === 2 ? ' multi-2' : product.sizes.length >= 3 ? ' multi-3' : '');
+  }
 
   sizeOpts.innerHTML = product.sizes.map((s, i) => `
     <div class="size-opt ${i === 0 ? 'active' : ''}" tabindex="0" role="radio" aria-checked="${i === 0}"
@@ -209,24 +232,17 @@ if (!product) {
     if (active?.dataset.mixed !== '1') document.getElementById('mixedNote').value = '';
   }
 
-  function updateBuyButton() {
-    const active = getActiveSize();
-    const link = active ? getStripeLink(product, active.dataset.id) : '';
-    const buyBtn = document.getElementById('buyBtn');
-    const disabledBtn = document.getElementById('buyBtnDisabled');
-    const note = document.getElementById('stripeNote');
-
-    if (link) {
-      buyBtn.href = link;
-      buyBtn.hidden = false;
-      disabledBtn.hidden = true;
-      note.textContent = 'Secure checkout via Stripe';
-    } else {
-      buyBtn.hidden = true;
-      disabledBtn.hidden = false;
-      note.textContent = 'Payment link coming soon — paste Stripe URL in js/catalog.js (see STRIPE-LINKS.md)';
-    }
-  }
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const active = getActiveSize() || product.sizes[0];
+    const variantId = active?.dataset.id || product.sizes[0].id;
+    const note = document.getElementById('mixedNote').value.trim();
+    addToCart(product.id, variantId, note);
+    const addBtn = document.getElementById('addBtn');
+    const addedMsg = document.getElementById('addedMsg');
+    addBtn.textContent = 'Added ✓';
+    addedMsg.hidden = false;
+    setTimeout(() => { addBtn.textContent = 'Add to cart'; }, 2000);
+  });
 
   sizeOpts.querySelectorAll('.size-opt').forEach(opt => {
     const pick = () => {
@@ -237,7 +253,6 @@ if (!product) {
       opt.classList.add('active');
       opt.setAttribute('aria-checked', 'true');
       updateMixedNote();
-      updateBuyButton();
     };
     opt.addEventListener('click', pick);
     opt.addEventListener('keydown', e => {
@@ -245,13 +260,14 @@ if (!product) {
     });
   });
   updateMixedNote();
-  updateBuyButton();
 
-  const inc = INCLUDES[product.id] || [];
+  const inc = product.includes || INCLUDES[product.id] || [];
   document.getElementById('includesList').innerHTML = inc.map(i => `<li>${i}</li>`).join('');
   document.getElementById('includesBox').hidden = inc.length === 0;
 }
 
 </script>
+<script src="js/popup.js"></script>
 </body>
 </html>
+
